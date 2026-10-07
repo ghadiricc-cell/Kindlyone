@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Kindly One - Admin</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .login {
+            max-width: 420px;
+            margin: 80px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.08);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        input,
+        textarea,
+        select,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            border: none;
+            background: #111827;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: .9;
+        }
+
+        .danger {
+            background: #dc2626;
+        }
+
+        .success {
+            background: #16a34a;
+        }
+
+        .warning {
+            background: #d97706;
+        }
+
+        .secondary {
+            background: #4b5563;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .header {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header button {
+            width: auto;
+            margin: 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.05);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .tabs button {
+            width: auto;
+            white-space: nowrap;
+            margin: 0;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.05);
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: #e5e7eb;
+            font-size: 12px;
+        }
+
+        .approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .submitted {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .small {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .address {
+            direction: ltr;
+            text-align: left;
+            word-break: break-all;
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="loginPage" class="login">
+
+    <h1>🔐 پنل مدیریت</h1>
+
+    <p class="small">
+        ورود به پنل مدیریت Kindly One
+    </p>
+
+    <input
+        type="password"
+        id="password"
+        placeholder="رمز مدیریت"
+    >
+
+    <button onclick="login()">
+        ورود
+    </button>
+
+    <div id="loginMessage" class="message hidden"></div>
+
+</div>
+
+
+<div id="adminPage" class="container hidden">
+
+    <div class="header">
+
+        <div>
+            <h1>Kindly One</h1>
+            <div class="small">پنل مدیریت</div>
+        </div>
+
+        <button
+            class="danger"
+            onclick="logout()"
+        >
+            خروج
+        </button>
+
+    </div>
+
+
+    <div class="stats">
+
+        <div class="stat">
+            کاربران
+            <div id="statUsers" class="stat-number">0</div>
+        </div>
+
+        <div class="stat">
+            کیس‌ها
+            <div id="statCases" class="stat-number">0</div>
+        </div>
+
+        <div class="stat">
+            کمک‌ها
+            <div id="statDonations" class="stat-number">0</div>
+        </div>
+
+        <div class="stat">
+            در انتظار بررسی
+            <div id="statSubmitted" class="stat-number">0</div>
+        </div>
+
+        <div class="stat">
+            تأیید شده
+            <div id="statApproved" class="stat-number">0</div>
+        </div>
+
+        <div class="stat">
+            مجموع تأییدشده
+            <div id="statTotal" class="stat-number">0</div>
+        </div>
+
+    </div>
+
+
+    <div class="tabs">
+
+        <button onclick="showTab('cases')">
+            ❤️ کیس‌ها
+        </button>
+
+        <button onclick="showTab('donations')">
+            💰 کمک‌ها
+        </button>
+
+        <button onclick="showTab('wallets')">
+            💳 کیف پول‌ها
+        </button>
+
+        <button onclick="showTab('users')">
+            👥 کاربران
+        </button>
+
+    </div>
+
+
+    <!-- CASES -->
+
+    <div id="casesTab" class="section">
+
+        <h2>❤️ مدیریت کیس‌ها</h2>
+
+        <div class="card">
+
+            <h3>افزودن کیس جدید</h3>
+
+            <input
+                id="newCaseTitle"
+                placeholder="عنوان کیس"
+            >
+
+            <textarea
+                id="newCaseDescription"
+                placeholder="توضیحات کیس"
+            ></textarea>
+
+            <div class="row">
+
+                <input
+                    id="newCaseGoal"
+                    type="number"
+                    placeholder="هدف"
+                >
+
+                <input
+                    id="newCaseCurrency"
+                    value="USDT"
+                    placeholder="ارز"
+                >
+
+                <select id="newCaseStatus">
+                    <option value="active">فعال</option>
+                    <option value="inactive">غیرفعال</option>
+                </select>
+
+            </div>
+
+            <button
+                class="success"
+                onclick="createCase()"
+            >
+                ایجاد کیس
+            </button>
+
+        </div>
+
+        <div id="casesList"></div>
+
+    </div>
+
+
+    <!-- DONATIONS -->
+
+    <div id="donationsTab" class="section hidden">
+
+        <h2>💰 مدیریت کمک‌ها</h2>
+
+        <div id="donationsList"></div>
+
+    </div>
+
+
+    <!-- WALLETS -->
+
+    <div id="walletsTab" class="section hidden">
+
+        <h2>💳 مدیریت کیف پول‌ها</h2>
+
+        <div class="card">
+
+            <h3>افزودن کیف پول</h3>
+
+            <div class="row">
+
+                <input
+                    id="newWalletCurrency"
+                    placeholder="مثلاً USDT"
+                >
+
+                <input
+                    id="newWalletNetwork"
+                    placeholder="مثلاً TRC20"
+                >
+
+            </div>
+
+            <input
+                id="newWalletAddress"
+                placeholder="Wallet Address"
+            >
+
+            <select id="newWalletStatus">
+                <option value="active">فعال</option>
+                <option value="inactive">غیرفعال</option>
+            </select>
+
+            <button
+                class="success"
+                onclick="createWallet()"
+            >
+                افزودن کیف پول
+            </button>
+
+        </div>
+
+        <div id="walletsList"></div>
+
+    </div>
+
+
+    <!-- USERS -->
+
+    <div id="usersTab" class="section hidden">
+
+        <h2>👥 کاربران</h2>
+
+        <div id="usersList"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const API_URL = "http://127.0.0.1:8000";
+
+let token = sessionStorage.getItem("kindlyone_admin_token");
+
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+async function api(url, options = {}) {
+
+    options.headers = options.headers || {};
+
+    if (token) {
+        options.headers["Authorization"] = "Bearer " + token;
+    }
+
+    if (options.body && typeof options.body !== "string") {
+
+        options.headers["Content-Type"] = "application/json";
+
+        options.body = JSON.stringify(options.body);
+    }
+
+    const response = await fetch(API_URL + url, options);
+
+    if (response.status === 401) {
+
+        logout();
+
+        throw new Error("احراز هویت منقضی شده است.");
+
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.detail || "خطا در درخواست"
+        );
+
+    }
+
+    return data;
+}
+
+
+async function login() {
+
+    const password =
+        document.getElementById("password").value.trim();
+
+    const message =
+        document.getElementById("loginMessage");
+
+    if (!password) {
+
+        message.textContent = "رمز را وارد کنید.";
+        message.classList.remove("hidden");
+
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            API_URL + "/api/admin/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    password: password
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.detail || "رمز اشتباه است."
+            );
+        }
+
+        token = data.token;
+
+        sessionStorage.setItem(
+            "kindlyone_admin_token",
+            token
+        );
+
+        showAdmin();
+
+    } catch (error) {
+
+        message.textContent = error.message;
+        message.classList.remove("hidden");
+
+    }
+}
+
+
+function logout() {
+
+    sessionStorage.removeItem(
+        "kindlyone_admin_token"
+    );
+
+    token = null;
+
+    document
+        .getElementById("adminPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("loginPage")
+        .classList.remove("hidden");
+}
+
+
+function showAdmin() {
+
+    document
+        .getElementById("loginPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("adminPage")
+        .classList.remove("hidden");
+
+    loadDashboard();
+
+}
+
+
+function showTab(tab) {
+
+    document
+        .getElementById("casesTab")
+        .classList.add("hidden");
+
+    document
+        .getElementById("donationsTab")
+        .classList.add("hidden");
+
+    document
+        .getElementById("walletsTab")
+        .classList.add("hidden");
+
+    document
+        .getElementById("usersTab")
+        .classList.add("hidden");
+
+
+    if (tab === "cases") {
+
+        document
+            .getElementById("casesTab")
+            .classList.remove("hidden");
+
+        loadCases();
+
+    }
+
+    if (tab === "donations") {
+
+        document
+            .getElementById("donationsTab")
+            .classList.remove("hidden");
+
+        loadDonations();
+
+    }
+
+    if (tab === "wallets") {
+
+        document
+            .getElementById("walletsTab")
+            .classList.remove("hidden");
+
+        loadWallets();
+
+    }
+
+    if (tab === "users") {
+
+        document
+            .getElementById("usersTab")
+            .classList.remove("hidden");
+
+        loadUsers();
+
+    }
+
+}
+
+
+async function loadDashboard() {
+
+    try {
+
+        const data =
+            await api("/api/admin/stats");
+
+        const s = data.stats;
+
+        document.getElementById("statUsers").textContent =
+            s.users;
+
+        document.getElementById("statCases").textContent =
+            s.cases;
+
+        document.getElementById("statDonations").textContent =
+            s.donations;
+
+        document.getElementById("statSubmitted").textContent =
+            s.submitted;
+
+        document.getElementById("statApproved").textContent =
+            s.approved;
+
+        document.getElementById("statTotal").textContent =
+            s.total_approved;
+
+        loadCases();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+async function loadCases() {
+
+    const container =
+        document.getElementById("casesList");
+
+    container.innerHTML = "در حال بارگذاری...";
+
+    try {
+
+        const data =
+            await api("/api/admin/cases");
+
+        container.innerHTML = "";
+
+        data.cases.forEach(c => {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "card";
+
+            card.innerHTML = `
+
+                <h3>
+                    ${escapeHtml(c.title)}
+                </h3>
+
+                <p>
+                    ${escapeHtml(c.description)}
+                </p>
+
+                <div class="row">
+
+                    <div>
+                        <label>هدف</label>
+
+                        <input
+                            id="goal-${c.id}"
+                            type="number"
+                            value="${c.goal}"
+                        >
+                    </div>
+
+                    <div>
+                        <label>جمع‌آوری‌شده</label>
+
+                        <input
+                            id="raised-${c.id}"
+                            type="number"
+                            value="${c.raised}"
+                        >
+                    </div>
+
+                    <div>
+                        <label>ارز</label>
+
+                        <input
+                            id="currency-${c.id}"
+                            value="${escapeHtml(c.currency)}"
+                        >
+                    </div>
+
+                    <div>
+                        <label>وضعیت</label>
+
+                        <select id="status-${c.id}">
+                            <option value="active"
+                                ${c.status === "active" ? "selected" : ""}>
+                                فعال
+                            </option>
+
+                            <option value="inactive"
+                                ${c.status === "inactive" ? "selected" : ""}>
+                                غیرفعال
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <button
+                    class="success"
+                    onclick="updateCase(${c.id})"
+                >
+                    ذخیره تغییرات
+                </button>
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        container.innerHTML =
+            `<div class="message">${escapeHtml(error.message)}</div>`;
+
+    }
+
+}
+
+
+async function createCase() {
+
+    const title =
+        document.getElementById("newCaseTitle").value.trim();
+
+    const description =
+        document.getElementById("newCaseDescription").value.trim();
+
+    const goal =
+        Number(document.getElementById("newCaseGoal").value);
+
+    const currency =
+        document.getElementById("newCaseCurrency").value.trim();
+
+    const status =
+        document.getElementById("newCaseStatus").value;
+
+
+    if (!title || !description || !goal) {
+
+        alert("اطلاعات کیس را کامل کنید.");
+
+        return;
+
+    }
+
+    try {
+
+        await api(
+            "/api/admin/cases",
+            {
+                method: "POST",
+                body: {
+                    title,
+                    description,
+                    goal,
+                    currency,
+                    status
+                }
+            }
+        );
+
+        alert("کیس ایجاد شد.");
+
+        document.getElementById("newCaseTitle").value = "";
+        document.getElementById("newCaseDescription").value = "";
+        document.getElementById("newCaseGoal").value = "";
+
+        loadCases();
+        loadDashboard();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+async function updateCase(id) {
+
+    const goal =
+        Number(document.getElementById(`goal-${id}`).value);
+
+    const raised =
+        Number(document.getElementById(`raised-${id}`).value);
+
+    const currency =
+        document.getElementById(`currency-${id}`).value.trim();
+
+    const status =
+        document.getElementById(`status-${id}`).value;
+
+
+    try {
+
+        await api(
+            `/api/admin/cases/${id}`,
+            {
+                method: "PUT",
+                body: {
+                    goal,
+                    raised,
+                    currency,
+                    status
+                }
+            }
+        );
+
+        alert("کیس ذخیره شد.");
+
+        loadCases();
+        loadDashboard();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+async function loadDonations() {
+
+    const container =
+        document.getElementById("donationsList");
+
+    container.innerHTML = "در حال بارگذاری...";
+
+    try {
+
+        const data =
+            await api("/api/admin/donations");
+
+        container.innerHTML = "";
+
+        if (data.donations.length === 0) {
+
+            container.innerHTML =
+                "<div class='message'>هنوز تراکنشی ثبت نشده است.</div>";
+
+            return;
+
+        }
+
+        data.donations.forEach(d => {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "card";
+
+            card.innerHTML = `
+
+                <h3>
+                    کمک #${d.id}
+                </h3>
+
+                <p>
+                    کیس:
+                    ${escapeHtml(d.case_title)}
+                </p>
+
+                <p>
+                    مبلغ:
+                    <strong>${d.amount}</strong>
+                    ${escapeHtml(d.currency)}
+                    -
+                    ${escapeHtml(d.network)}
+                </p>
+
+                <p>
+                    Telegram ID:
+                    ${escapeHtml(d.telegram_id)}
+                </p>
+
+                <p>
+                    وضعیت:
+                    <span class="badge ${escapeHtml(d.status)}">
+                        ${escapeHtml(d.status)}
+                    </span>
+                </p>
+
+                <p>
+                    TXID:
+                </p>
+
+                <div class="address">
+                    ${escapeHtml(d.tx_hash || "ثبت نشده")}
+                </div>
+
+                <br>
+
+                <div class="row">
+
+                    <button
+                        class="success"
+                        onclick="changeDonationStatus(${d.id}, 'approved')"
+                    >
+                        تأیید
+                    </button>
+
+                    <button
+                        class="danger"
+                        onclick="changeDonationStatus(${d.id}, 'rejected')"
+                    >
+                        رد
+                    </button>
+
+                    <button
+                        class="secondary"
+                        onclick="changeDonationStatus(${d.id}, 'submitted')"
+                    >
+                        در انتظار
+                    </button>
+
+                </div>
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        container.innerHTML =
+            `<div class="message">${escapeHtml(error.message)}</div>`;
+
+    }
+
+}
+
+
+async function changeDonationStatus(id, status) {
+
+    try {
+
+        await api(
+            `/api/admin/donations/${id}/status`,
+            {
+                method: "PUT",
+                body: {
+                    status
+                }
+            }
+        );
+
+        alert("وضعیت تراکنش تغییر کرد.");
+
+        loadDonations();
+        loadDashboard();
+        loadCases();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+async function loadWallets() {
+
+    const container =
+        document.getElementById("walletsList");
+
+    container.innerHTML = "در حال بارگذاری...";
+
+    try {
+
+        const data =
+            await api("/api/admin/wallets");
+
+        container.innerHTML = "";
+
+        data.wallets.forEach(w => {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "card";
+
+            card.innerHTML = `
+
+                <h3>
+                    ${escapeHtml(w.currency)}
+                    -
+                    ${escapeHtml(w.network)}
+                </h3>
+
+                <input
+                    id="wallet-currency-${w.id}"
+                    value="${escapeHtml(w.currency)}"
+                >
+
+                <input
+                    id="wallet-network-${w.id}"
+                    value="${escapeHtml(w.network)}"
+                >
+
+                <input
+                    id="wallet-address-${w.id}"
+                    value="${escapeHtml(w.address)}"
+                    dir="ltr"
+                >
+
+                <select id="wallet-status-${w.id}">
+
+                    <option value="active"
+                        ${w.status === "active" ? "selected" : ""}>
+                        فعال
+                    </option>
+
+                    <option value="inactive"
+                        ${w.status === "inactive" ? "selected" : ""}>
+                        غیرفعال
+                    </option>
+
+                </select>
+
+                <button
+                    class="success"
+                    onclick="updateWallet(${w.id})"
+                >
+                    ذخیره کیف پول
+                </button>
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        container.innerHTML =
+            `<div class="message">${escapeHtml(error.message)}</div>`;
+
+    }
+
+}
+
+
+async function createWallet() {
+
+    const currency =
+        document.getElementById("newWalletCurrency").value.trim();
+
+    const network =
+        document.getElementById("newWalletNetwork").value.trim();
+
+    const address =
+        document.getElementById("newWalletAddress").value.trim();
+
+    const status =
+        document.getElementById("newWalletStatus").value;
+
+
+    if (!currency || !network || !address) {
+
+        alert("اطلاعات کیف پول را کامل کنید.");
+
+        return;
+
+    }
+
+    try {
+
+        await api(
+            "/api/wallets",
+            {
+                method: "POST",
+                body: {
+                    currency,
+                    network,
+                    address,
+                    status
+                }
+            }
+        );
+
+        alert("کیف پول اضافه شد.");
+
+        document.getElementById("newWalletCurrency").value = "";
+        document.getElementById("newWalletNetwork").value = "";
+        document.getElementById("newWalletAddress").value = "";
+
+        loadWallets();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+async function updateWallet(id) {
+
+    const currency =
+        document.getElementById(`wallet-currency-${id}`).value.trim();
+
+    const network =
+        document.getElementById(`wallet-network-${id}`).value.trim();
+
+    const address =
+        document.getElementById(`wallet-address-${id}`).value.trim();
+
+    const status =
+        document.getElementById(`wallet-status-${id}`).value;
+
+
+    try {
+
+        await api(
+            `/api/admin/wallets/${id}`,
+            {
+                method: "PUT",
+                body: {
+                    currency,
+                    network,
+                    address,
+                    status
+                }
+            }
+        );
+
+        alert("کیف پول ذخیره شد.");
+
+        loadWallets();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+async function loadUsers() {
+
+    const container =
+        document.getElementById("usersList");
+
+    container.innerHTML = "در حال بارگذاری...";
+
+    try {
+
+        const data =
+            await api("/api/admin/users");
+
+        container.innerHTML = "";
+
+        if (data.users.length === 0) {
+
+            container.innerHTML =
+                "<div class='message'>هنوز کاربری ثبت نشده است.</div>";
+
+            return;
+
+        }
+
+        data.users.forEach(u => {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "card";
+
+            card.innerHTML = `
+
+                <strong>
+                    ${escapeHtml(
+                        (u.first_name || "") +
+                        " " +
+                        (u.last_name || "")
+                    )}
+                </strong>
+
+                <p>
+                    Username:
+                    ${escapeHtml(u.username || "-")}
+                </p>
+
+                <p>
+                    Telegram ID:
+                    ${escapeHtml(u.telegram_id)}
+                </p>
+
+                <p>
+                    زبان:
+                    ${escapeHtml(u.language || "-")}
+                </p>
+
+                <p class="small">
+                    آخرین فعالیت:
+                    ${escapeHtml(u.last_seen || "-")}
+                </p>
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        container.innerHTML =
+            `<div class="message">${escapeHtml(error.message)}</div>`;
+
+    }
+
+}
+
+
+if (token) {
+
+    showAdmin();
+
+}
+
+</script>
+
+</body>
+</html>

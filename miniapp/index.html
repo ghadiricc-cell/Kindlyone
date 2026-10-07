@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Kindly One</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Tahoma, Arial, sans-serif;
+            background: #f5f7fa;
+            color: #222;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 18px;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 45px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .welcome {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .user-box {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #eef7ff;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .buttons {
+            display: grid;
+            gap: 12px;
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 16px;
+            cursor: pointer;
+            background: white;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+            transition: 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .primary {
+            background: #20a464;
+            color: white;
+        }
+
+        .secondary {
+            background: #eef7ff;
+            color: #1769aa;
+        }
+
+        .back {
+            background: #eee;
+            color: #444;
+        }
+
+        .danger {
+            background: #fff0f0;
+            color: #b42318;
+        }
+
+        .cases {
+            margin-top: 20px;
+        }
+
+        .case {
+            background: white;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .case h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .case p {
+            line-height: 1.8;
+            color: #666;
+        }
+
+        .progress {
+            background: #eee;
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #20a464;
+        }
+
+        .case-info {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .case-detail {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.07);
+        }
+
+        .currency-title {
+            text-align: center;
+            margin: 25px 0 15px;
+        }
+
+        .currency {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+        }
+
+        .currency-icon {
+            font-size: 28px;
+            width: 45px;
+            text-align: center;
+        }
+
+        .currency-info {
+            flex: 1;
+        }
+
+        .currency-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .currency-network {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .currency-arrow {
+            font-size: 20px;
+            color: #20a464;
+        }
+
+        .selected-case {
+            background: #eefaf3;
+            border: 1px solid #20a464;
+        }
+
+        .amount-box {
+            background: #f8f9fa;
+            border-radius: 14px;
+            padding: 15px;
+            margin-top: 15px;
+            line-height: 2;
+        }
+
+        .amount-input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 18px;
+            text-align: center;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        .amount-input:focus {
+            border-color: #20a464;
+        }
+
+        .wallet-box {
+            background: #eefaf3;
+            border: 1px solid #20a464;
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 15px;
+        }
+
+        .wallet-address {
+            direction: ltr;
+            text-align: left;
+            word-break: break-all;
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .copy-button {
+            margin-top: 10px;
+            background: #fff;
+            color: #1769aa;
+        }
+
+        .tx-input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        .tx-input:focus {
+            border-color: #20a464;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+            color: #777;
+        }
+
+        .success-box {
+            background: #eefaf3;
+            border: 1px solid #20a464;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            line-height: 2;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <div class="logo">❤️</div>
+
+        <h1>Kindly One</h1>
+
+        <div class="welcome">
+            جایی برای کمک کردن، کمک گرفتن و ایجاد امید.
+        </div>
+
+        <div id="userBox" class="user-box"></div>
+
+    </div>
+
+
+    <!-- صفحه اصلی -->
+
+    <div id="homePage">
+
+        <div class="buttons">
+
+            <button class="primary" onclick="donate()">
+                ❤️ کمک می‌کنم
+            </button>
+
+            <button onclick="reportCase()">
+                🆘 معرفی یک کیس
+            </button>
+
+            <button onclick="showTransparency()">
+                📊 شفافیت
+            </button>
+
+            <button onclick="aboutUs()">
+                📖 درباره ما
+            </button>
+
+            <button onclick="settings()">
+                ⚙️ تنظیمات
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- صفحه کیس‌ها -->
+
+    <div id="casesPage" class="hidden">
+
+        <div id="cases" class="cases"></div>
+
+        <button class="back" onclick="goHome()">
+            ← بازگشت
+        </button>
+
+    </div>
+
+
+    <!-- صفحه جزئیات کیس -->
+
+    <div id="casePage" class="hidden">
+
+        <div id="caseDetail"></div>
+
+        <br>
+
+        <button class="primary" onclick="showCurrencies()">
+            ❤️ انتخاب ارز
+        </button>
+
+        <br><br>
+
+        <button class="back" onclick="showCases()">
+            ← بازگشت به کیس‌ها
+        </button>
+
+    </div>
+
+
+    <!-- صفحه انتخاب ارز -->
+
+    <div id="currencyPage" class="hidden">
+
+        <h2 class="currency-title">
+            انتخاب ارز برای کمک
+        </h2>
+
+        <div id="selectedCaseSummary"></div>
+
+        <br>
+
+        <div class="currency"
+             onclick="selectCurrency('USDT', 'TRC20')">
+
+            <div class="currency-icon">
+                💵
+            </div>
+
+            <div class="currency-info">
+
+                <div class="currency-name">
+                    USDT
+                </div>
+
+                <div class="currency-network">
+                    شبکه TRC20
+                </div>
+
+            </div>
+
+            <div class="currency-arrow">
+                ←
+            </div>
+
+        </div>
+
+
+        <div class="currency"
+             onclick="selectCurrency('USDT', 'BEP20')">
+
+            <div class="currency-icon">
+                💵
+            </div>
+
+            <div class="currency-info">
+
+                <div class="currency-name">
+                    USDT
+                </div>
+
+                <div class="currency-network">
+                    شبکه BEP20
+                </div>
+
+            </div>
+
+            <div class="currency-arrow">
+                ←
+            </div>
+
+        </div>
+
+
+        <div class="currency"
+             onclick="selectCurrency('BTC', 'Bitcoin')">
+
+            <div class="currency-icon">
+                ₿
+            </div>
+
+            <div class="currency-info">
+
+                <div class="currency-name">
+                    Bitcoin
+                </div>
+
+                <div class="currency-network">
+                    شبکه Bitcoin
+                </div>
+
+            </div>
+
+            <div class="currency-arrow">
+                ←
+            </div>
+
+        </div>
+
+
+        <div class="currency"
+             onclick="selectCurrency('ETH', 'Ethereum')">
+
+            <div class="currency-icon">
+                Ξ
+            </div>
+
+            <div class="currency-info">
+
+                <div class="currency-name">
+                    Ethereum
+                </div>
+
+                <div class="currency-network">
+                    شبکه Ethereum
+                </div>
+
+            </div>
+
+            <div class="currency-arrow">
+                ←
+            </div>
+
+        </div>
+
+
+        <div class="currency"
+             onclick="selectCurrency('TRX', 'TRON')">
+
+            <div class="currency-icon">
+                🔴
+            </div>
+
+            <div class="currency-info">
+
+                <div class="currency-name">
+                    TRON
+                </div>
+
+                <div class="currency-network">
+                    شبکه TRON
+                </div>
+
+            </div>
+
+            <div class="currency-arrow">
+                ←
+            </div>
+
+        </div>
+
+
+        <br>
+
+        <button class="back" onclick="showSelectedCase()">
+            ← بازگشت
+        </button>
+
+    </div>
+
+
+    <!-- صفحه مبلغ -->
+
+    <div id="amountPage" class="hidden">
+
+        <div id="amountContent"></div>
+
+        <br>
+
+        <button class="primary" onclick="createDonation()">
+            ادامه و دریافت آدرس کیف پول
+        </button>
+
+        <br><br>
+
+        <button class="back" onclick="showCurrencies()">
+            ← تغییر ارز
+        </button>
+
+    </div>
+
+
+    <!-- صفحه کیف پول -->
+
+    <div id="walletPage" class="hidden">
+
+        <div id="walletContent"></div>
+
+        <br>
+
+        <button class="primary" onclick="showTxForm()">
+            ✅ پرداخت کردم
+        </button>
+
+    </div>
+
+
+    <!-- صفحه ثبت تراکنش -->
+
+    <div id="txPage" class="hidden">
+
+        <div id="txContent"></div>
+
+        <br>
+
+        <button class="primary" onclick="confirmDonation()">
+            ثبت تراکنش
+        </button>
+
+        <br><br>
+
+        <button class="back" onclick="showWallet()">
+            ← بازگشت
+        </button>
+
+    </div>
+
+
+    <!-- صفحه موفقیت -->
+
+    <div id="successPage" class="hidden">
+
+        <div id="successContent"></div>
+
+        <br>
+
+        <button class="primary" onclick="goHome()">
+            بازگشت به صفحه اصلی
+        </button>
+
+    </div>
+
+
+    <div id="status" class="status"></div>
+
+
+    <div class="footer">
+        Kindly One ❤️
+    </div>
+
+</div>
+
+
+<script>
+
+    // =========================================
+    // Telegram
+    // =========================================
+
+    let tg = null;
+
+    if (window.Telegram && window.Telegram.WebApp) {
+
+        tg = window.Telegram.WebApp;
+
+        tg.ready();
+        tg.expand();
+    }
+
+
+    // =========================================
+    // Backend
+    // =========================================
+
+    const API_URL = "http://127.0.0.1:8000";
+
+
+    // =========================================
+    // Current State
+    // =========================================
+
+    let selectedCase = null;
+
+    let selectedCurrency = null;
+
+    let selectedNetwork = null;
+
+    let currentDonation = null;
+
+    let currentWallet = null;
+
+
+    // =========================================
+    // Page Helpers
+    // =========================================
+
+    function hideAllPages() {
+
+        document.getElementById("homePage").classList.add("hidden");
+
+        document.getElementById("casesPage").classList.add("hidden");
+
+        document.getElementById("casePage").classList.add("hidden");
+
+        document.getElementById("currencyPage").classList.add("hidden");
+
+        document.getElementById("amountPage").classList.add("hidden");
+
+        document.getElementById("walletPage").classList.add("hidden");
+
+        document.getElementById("txPage").classList.add("hidden");
+
+        document.getElementById("successPage").classList.add("hidden");
+    }
+
+
+    function goHome() {
+
+        hideAllPages();
+
+        document.getElementById("homePage").classList.remove("hidden");
+    }
+
+
+    function showCases() {
+
+        hideAllPages();
+
+        document.getElementById("casesPage").classList.remove("hidden");
+    }
+
+
+    function showSelectedCase() {
+
+        hideAllPages();
+
+        document.getElementById("casePage").classList.remove("hidden");
+    }
+
+
+    // =========================================
+    // Register Telegram User
+    // =========================================
+
+    async function registerUser() {
+
+        if (
+            !tg ||
+            !tg.initDataUnsafe ||
+            !tg.initDataUnsafe.user
+        ) {
+
+            document.getElementById("status").innerText =
+                "حالت تست مرورگر فعال است.";
+
+            return;
+        }
+
+
+        const user = tg.initDataUnsafe.user;
+
+
+        const userData = {
+
+            telegram_id: user.id,
+
+            first_name: user.first_name || "",
+
+            last_name: user.last_name || "",
+
+            username: user.username || "",
+
+            language: user.language_code || "fa"
+        };
+
+
+        try {
+
+            const response = await fetch(
+                API_URL + "/api/users",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(userData)
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (data.success) {
+
+                document.getElementById("status").innerText =
+                    "کاربر با موفقیت شناسایی شد.";
+
+                showUser(userData);
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            document.getElementById("status").innerText =
+                "ارتباط با سرور برقرار نشد.";
+        }
+    }
+
+
+    // =========================================
+    // Show User
+    // =========================================
+
+    function showUser(user) {
+
+        const box = document.getElementById("userBox");
+
+        let name = user.first_name || "کاربر";
+
+        if (user.last_name) {
+            name += " " + user.last_name;
+        }
+
+        let username = "";
+
+        if (user.username) {
+            username = "@" + user.username;
+        }
+
+        box.innerHTML =
+            "👤 " + name +
+            (username ? "<br>" + username : "");
+
+        box.style.display = "block";
+    }
+
+
+    // =========================================
+    // Get Cases
+    // =========================================
+
+    async function donate() {
+
+        hideAllPages();
+
+        document.getElementById("casesPage").classList.remove("hidden");
+
+        const casesBox = document.getElementById("cases");
+
+        casesBox.innerHTML =
+            '<div class="loading">در حال دریافت کیس‌ها...</div>';
+
+
+        try {
+
+            const response = await fetch(
+                API_URL + "/api/cases"
+            );
+
+
+            const data = await response.json();
+
+
+            if (!data.success) {
+
+                casesBox.innerHTML =
+                    "دریافت اطلاعات ناموفق بود.";
+
+                return;
+            }
+
+
+            if (!data.cases || data.cases.length === 0) {
+
+                casesBox.innerHTML =
+                    "در حال حاضر کیسی وجود ندارد.";
+
+                return;
+            }
+
+
+            casesBox.innerHTML = "";
+
+
+            data.cases.forEach(function(caseItem) {
+
+                let percent = 0;
+
+                if (caseItem.goal > 0) {
+
+                    percent =
+                        (caseItem.raised / caseItem.goal) * 100;
+                }
+
+
+                if (percent > 100) {
+                    percent = 100;
+                }
+
+
+                const caseElement =
+                    document.createElement("div");
+
+
+                caseElement.className = "case";
+
+
+                caseElement.innerHTML = `
+
+                    <h3>
+                        ${escapeHtml(caseItem.title)}
+                    </h3>
+
+                    <p>
+                        ${escapeHtml(caseItem.description)}
+                    </p>
+
+                    <div class="progress">
+
+                        <div
+                            class="progress-bar"
+                            style="width: ${percent}%">
+                        </div>
+
+                    </div>
+
+                    <div class="case-info">
+
+                        <span>
+                            جمع‌آوری:
+                            ${caseItem.raised}
+                            ${caseItem.currency}
+                        </span>
+
+                        <span>
+                            هدف:
+                            ${caseItem.goal}
+                            ${caseItem.currency}
+                        </span>
+
+                    </div>
+
+                    <br>
+
+                    <button
+                        class="primary"
+                        onclick="selectCase(${caseItem.id})">
+
+                        ❤️ انتخاب این کیس
+
+                    </button>
+                `;
+
+
+                casesBox.appendChild(caseElement);
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            casesBox.innerHTML =
+                "خطا در اتصال به سرور.";
+        }
+    }
+
+
+    // =========================================
+    // Select Case
+    // =========================================
+
+    async function selectCase(id) {
+
+        const detailBox =
+            document.getElementById("caseDetail");
+
+
+        hideAllPages();
+
+        document.getElementById("casePage").classList.remove("hidden");
+
+
+        detailBox.innerHTML =
+            '<div class="loading">در حال دریافت اطلاعات کیس...</div>';
+
+
+        try {
+
+            const response = await fetch(
+                API_URL + "/api/cases/" + id
+            );
+
+
+            const data = await response.json();
+
+
+            if (!data.success || !data.case) {
+
+                detailBox.innerHTML =
+                    "اطلاعات کیس دریافت نشد.";
+
+                return;
+            }
+
+
+            selectedCase = data.case;
+
+
+            renderCaseDetail(selectedCase);
+
+        } catch (error) {
+
+            console.error(error);
+
+            detailBox.innerHTML =
+                "خطا در دریافت اطلاعات کیس.";
+        }
+    }
+
+
+    // =========================================
+    // Render Case
+    // =========================================
+
+    function renderCaseDetail(caseItem) {
+
+        let percent = 0;
+
+        if (caseItem.goal > 0) {
+
+            percent =
+                (caseItem.raised / caseItem.goal) * 100;
+        }
+
+
+        if (percent > 100) {
+            percent = 100;
+        }
+
+
+        document.getElementById("caseDetail").innerHTML = `
+
+            <div class="case-detail">
+
+                <h2>
+                    ${escapeHtml(caseItem.title)}
+                </h2>
+
+                <p>
+                    ${escapeHtml(caseItem.description)}
+                </p>
+
+                <div class="progress">
+
+                    <div
+                        class="progress-bar"
+                        style="width: ${percent}%">
+                    </div>
+
+                </div>
+
+                <div class="case-info">
+
+                    <span>
+                        جمع‌آوری:
+                        ${caseItem.raised}
+                        ${caseItem.currency}
+                    </span>
+
+                    <span>
+                        هدف:
+                        ${caseItem.goal}
+                        ${caseItem.currency}
+                    </span>
+
+                </div>
+
+                <div class="amount-box">
+
+                    وضعیت:
+                    ${escapeHtml(caseItem.status || "active")}
+
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    // =========================================
+    // Show Currencies
+    // =========================================
+
+    function showCurrencies() {
+
+        if (!selectedCase) {
+
+            showAlert(
+                "ابتدا یک کیس را انتخاب کنید."
+            );
+
+            return;
+        }
+
+
+        hideAllPages();
+
+        document.getElementById("currencyPage").classList.remove("hidden");
+
+
+        document.getElementById("selectedCaseSummary").innerHTML = `
+
+            <div class="case selected-case">
+
+                <strong>
+                    کیس انتخاب‌شده:
+                </strong>
+
+                <br><br>
+
+                ${escapeHtml(selectedCase.title)}
+
+            </div>
+
+        `;
+    }
+
+
+    // =========================================
+    // Select Currency
+    // =========================================
+
+    function selectCurrency(currency, network) {
+
+        if (!selectedCase) {
+
+            showAlert(
+                "ابتدا یک کیس را انتخاب کنید."
+            );
+
+            return;
+        }
+
+
+        selectedCurrency = currency;
+
+        selectedNetwork = network;
+
+
+        hideAllPages();
+
+        document.getElementById("amountPage").classList.remove("hidden");
+
+
+        document.getElementById("amountContent").innerHTML = `
+
+            <div class="case-detail">
+
+                <h2>
+                    مبلغ کمک
+                </h2>
+
+                <div class="amount-box">
+
+                    <strong>کیس:</strong>
+                    ${escapeHtml(selectedCase.title)}
+
+                    <br>
+
+                    <strong>ارز:</strong>
+                    ${escapeHtml(selectedCurrency)}
+
+                    <br>
+
+                    <strong>شبکه:</strong>
+                    ${escapeHtml(selectedNetwork)}
+
+                    <br><br>
+
+                    مبلغ مورد نظر خود را وارد کنید:
+
+                    <input
+                        id="amountInput"
+                        class="amount-input"
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="مثلاً 10"
+                    />
+
+                    <div style="font-size:12px;color:#777;margin-top:8px;">
+                        مبلغ بر اساس ارز انتخاب‌شده است.
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    // =========================================
+    // Create Donation
+    // =========================================
+
+    async function createDonation() {
+
+        const amountInput =
+            document.getElementById("amountInput");
+
+
+        if (!amountInput) {
+            return;
+        }
+
+
+        const amount =
+            parseFloat(amountInput.value);
+
+
+        if (!amount || amount <= 0) {
+
+            showAlert(
+                "لطفاً مبلغ معتبر وارد کنید."
+            );
+
+            return;
+        }
+
+
+        let telegramId = null;
+
+
+        if (
+            tg &&
+            tg.initDataUnsafe &&
+            tg.initDataUnsafe.user
+        ) {
+
+            telegramId =
+                tg.initDataUnsafe.user.id;
+        }
+
+
+        hideAllPages();
+
+        document.getElementById("walletPage").classList.remove("hidden");
+
+
+        document.getElementById("walletContent").innerHTML =
+            '<div class="loading">در حال ایجاد درخواست کمک...</div>';
+
+
+        try {
+
+            const response = await fetch(
+                API_URL + "/api/donations",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        case_id: selectedCase.id,
+
+                        telegram_id: telegramId,
+
+                        currency: selectedCurrency,
+
+                        network: selectedNetwork,
+
+                        amount: amount
+                    })
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (!response.ok || !data.success) {
+
+                throw new Error(
+                    data.detail || "خطا در ایجاد درخواست"
+                );
+            }
+
+
+            currentDonation = data;
+
+            currentWallet = data.wallet;
+
+
+            renderWallet(data);
+
+        } catch (error) {
+
+            console.error(error);
+
+            document.getElementById("walletContent").innerHTML = `
+
+                <div class="case-detail">
+
+                    <h2>
+                        خطا
+                    </h2>
+
+                    <p>
+                        ${escapeHtml(error.message)}
+                    </p>
+
+                </div>
+
+            `;
+        }
+    }
+
+
+    // =========================================
+    // Render Wallet
+    // =========================================
+
+    function renderWallet(data) {
+
+        const wallet =
+            data.wallet;
+
+
+        document.getElementById("walletContent").innerHTML = `
+
+            <div class="case-detail">
+
+                <h2>
+                    آدرس کیف پول
+                </h2>
+
+                <div class="amount-box">
+
+                    <strong>کیس:</strong>
+                    ${escapeHtml(selectedCase.title)}
+
+                    <br>
+
+                    <strong>مبلغ:</strong>
+                    ${escapeHtml(
+                        document.getElementById("amountInput")
+                            ? document.getElementById("amountInput").value
+                            : ""
+                    )}
+                    ${escapeHtml(selectedCurrency)}
+
+                    <br>
+
+                    <strong>شبکه:</strong>
+                    ${escapeHtml(selectedNetwork)}
+
+                </div>
+
+
+                <div class="wallet-box">
+
+                    <strong>
+                        آدرس دریافت:
+                    </strong>
+
+                    <div
+                        id="walletAddress"
+                        class="wallet-address">
+                        ${escapeHtml(wallet.address)}
+                    </div>
+
+                    <button
+                        class="copy-button"
+                        onclick="copyWalletAddress()">
+
+                        📋 کپی آدرس
+
+                    </button>
+
+                </div>
+
+
+                <div class="amount-box">
+
+                    ⚠️ حتماً ارز و شبکه را دقیقاً مطابق اطلاعات بالا ارسال کنید.
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    // =========================================
+    // Copy Wallet
+    // =========================================
+
+    async function copyWalletAddress() {
+
+        if (!currentWallet) {
+            return;
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                currentWallet.address
+            );
+
+
+            showAlert(
+                "آدرس کیف پول کپی شد."
+            );
+
+        } catch (error) {
+
+            showAlert(
+                "کپی خودکار انجام نشد. آدرس را دستی کپی کنید."
+            );
+        }
+    }
+
+
+    // =========================================
+    // Show Transaction Form
+    // =========================================
+
+    function showTxForm() {
+
+        if (!currentDonation) {
+
+            showAlert(
+                "ابتدا درخواست کمک را ایجاد کنید."
+            );
+
+            return;
+        }
+
+
+        hideAllPages();
+
+        document.getElementById("txPage").classList.remove("hidden");
+
+
+        document.getElementById("txContent").innerHTML = `
+
+            <div class="case-detail">
+
+                <h2>
+                    ثبت پرداخت
+                </h2>
+
+                <div class="amount-box">
+
+                    پس از ارسال مبلغ، شناسه تراکنش
+                    (TXID / Transaction Hash)
+                    را در قسمت زیر وارد کنید.
+
+                </div>
+
+                <input
+                    id="txHashInput"
+                    class="tx-input"
+                    type="text"
+                    placeholder="Transaction Hash / TXID"
+                />
+
+            </div>
+
+        `;
+    }
+
+
+    // =========================================
+    // Show Wallet
+    // =========================================
+
+    function showWallet() {
+
+        hideAllPages();
+
+        document.getElementById("walletPage").classList.remove("hidden");
+
+        if (currentDonation && currentWallet) {
+
+            renderWallet(currentDonation);
+        }
+    }
+
+
+    // =========================================
+    // Confirm Donation
+    // =========================================
+
+    async function confirmDonation() {
+
+        if (!currentDonation) {
+
+            showAlert(
+                "درخواست کمک پیدا نشد."
+            );
+
+            return;
+        }
+
+
+        const txInput =
+            document.getElementById("txHashInput");
+
+
+        const txHash =
+            txInput ? txInput.value.trim() : "";
+
+
+        if (!txHash) {
+
+            showAlert(
+                "لطفاً شناسه تراکنش را وارد کنید."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            const response = await fetch(
+
+                API_URL +
+                "/api/donations/" +
+                currentDonation.donation_id +
+                "/confirm",
+
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        tx_hash: txHash
+
+                    })
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (!response.ok || !data.success) {
+
+                throw new Error(
+                    data.detail || "خطا در ثبت تراکنش"
+                );
+            }
+
+
+            hideAllPages();
+
+            document.getElementById("successPage").classList.remove("hidden");
+
+
+            document.getElementById("successContent").innerHTML = `
+
+                <div class="success-box">
+
+                    <h2>
+                        ✅ تراکنش ثبت شد
+                    </h2>
+
+                    <p>
+                        درخواست کمک شما با موفقیت ثبت شد.
+                    </p>
+
+                    <p>
+                        شناسه درخواست:
+                        <strong>
+                            #${currentDonation.donation_id}
+                        </strong>
+                    </p>
+
+                    <p>
+                        وضعیت:
+                        در انتظار بررسی
+                    </p>
+
+                </div>
+
+            `;
+
+        } catch (error) {
+
+            console.error(error);
+
+            showAlert(
+                error.message
+            );
+        }
+    }
+
+
+    // =========================================
+    // Other Buttons
+    // =========================================
+
+    function reportCase() {
+
+        showAlert(
+            "بخش معرفی کیس به‌زودی فعال می‌شود."
+        );
+    }
+
+
+    function showTransparency() {
+
+        showAlert(
+            "بخش شفافیت و گزارش تراکنش‌ها به‌زودی فعال می‌شود."
+        );
+    }
+
+
+    function aboutUs() {
+
+        showAlert(
+            "Kindly One برای ایجاد یک سیستم شفاف و قابل اعتماد برای کمک‌رسانی ساخته می‌شود ❤️"
+        );
+    }
+
+
+    function settings() {
+
+        showAlert(
+            "تنظیمات به‌زودی فعال می‌شود."
+        );
+    }
+
+
+    // =========================================
+    // Alert
+    // =========================================
+
+    function showAlert(message) {
+
+        if (tg && tg.showAlert) {
+
+            tg.showAlert(message);
+
+        } else {
+
+            alert(message);
+        }
+    }
+
+
+    // =========================================
+    // HTML Safety
+    // =========================================
+
+    function escapeHtml(value) {
+
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+
+    // =========================================
+    // Start
+    // =========================================
+
+    registerUser();
+
+</script>
+
+</body>
+</html>
