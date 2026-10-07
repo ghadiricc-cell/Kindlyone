@@ -17,13 +17,22 @@ load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "kindlyone.db")
 
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-this-password")
-ADMIN_SECRET = os.getenv("ADMIN_SECRET", "change-this-secret")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+ADMIN_PASSWORD = os.getenv(
+    "ADMIN_PASSWORD",
+    "change-this-password"
+)
+
+ADMIN_SECRET = os.getenv(
+    "ADMIN_SECRET",
+    "change-this-secret"
+)
 
 
 app = FastAPI(
     title="Kindly One API",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 app.add_middleware(
@@ -35,85 +44,228 @@ app.add_middleware(
 )
 
 
-# =========================
+# =========================================================
 # DATABASE
-# =========================
+# =========================================================
+
+class DBConnection:
+    """
+    Small compatibility layer so the same application can use:
+    - SQLite locally
+    - PostgreSQL on Cloud / Neon
+    """
+
+    def __init__(self):
+        self.is_postgres = bool(DATABASE_URL)
+
+        if self.is_postgres:
+            import psycopg
+            from psycopg.rows import dict_row
+
+            self.conn = psycopg.connect(
+                DATABASE_URL,
+                row_factory=dict_row
+            )
+        else:
+            self.conn = sqlite3.connect(DB_PATH)
+            self.conn.row_factory = sqlite3.Row
+            self.conn.execute("PRAGMA foreign_keys = ON")
+
+    def execute(self, query, params=None):
+        if self.is_postgres:
+            query = query.replace("?", "%s")
+
+            cursor = self.conn.cursor()
+            cursor.execute(query, params or ())
+            return DBCursor(cursor, self)
+
+        return DBCursor(
+            self.conn.execute(query, params or ()),
+            self
+        )
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
+
+
+class DBCursor:
+    def __init__(self, cursor, connection):
+        self.cursor = cursor
+        self.connection = connection
+
+    def fetchone(self):
+        return self.cursor.fetchone()
+
+    def fetchall(self):
+        return self.cursor.fetchall()
+
+    @property
+    def lastrowid(self):
+        if not self.connection.is_postgres:
+            return self.cursor.lastrowid
+
+        result = self.connection.conn.execute(
+            "SELECT lastval()"
+        ).fetchone()
+
+        if isinstance(result, dict):
+            return list(result.values())[0]
+
+        return result[0]
+
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return DBConnection()
 
 
 def init_db():
     conn = get_db()
-    cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS cases (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            goal REAL NOT NULL DEFAULT 0,
-            raised REAL NOT NULL DEFAULT 0,
-            currency TEXT NOT NULL DEFAULT 'USDT',
-            status TEXT NOT NULL DEFAULT 'active',
-            created_at TEXT NOT NULL
-        )
-    """)
+    # =====================================================
+    # POSTGRESQL
+    # =====================================================
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            telegram_id TEXT UNIQUE NOT NULL,
-            first_name TEXT,
-            last_name TEXT,
-            username TEXT,
-            language TEXT,
-            status TEXT NOT NULL DEFAULT 'active',
-            created_at TEXT NOT NULL,
-            last_seen TEXT NOT NULL
-        )
-    """)
+    if conn.is_postgres:
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS wallets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            currency TEXT NOT NULL,
-            network TEXT NOT NULL,
-            address TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'active',
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS cases (
+                id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                goal DOUBLE PRECISION NOT NULL DEFAULT 0,
+                raised DOUBLE PRECISION NOT NULL DEFAULT 0,
+                currency TEXT NOT NULL DEFAULT 'USDT',
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL
+            )
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS donations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            case_id INTEGER NOT NULL,
-            telegram_id TEXT NOT NULL,
-            currency TEXT NOT NULL,
-            network TEXT NOT NULL,
-            amount REAL NOT NULL,
-            wallet_address TEXT NOT NULL,
-            tx_hash TEXT,
-            status TEXT NOT NULL DEFAULT 'pending',
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            FOREIGN KEY(case_id) REFERENCES cases(id)
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                telegram_id TEXT UNIQUE NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                username TEXT,
+                language TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                last_seen TEXT NOT NULL
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS wallets (
+                id SERIAL PRIMARY KEY,
+                currency TEXT NOT NULL,
+                network TEXT NOT NULL,
+                address TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS donations (
+                id SERIAL PRIMARY KEY,
+                case_id INTEGER NOT NULL,
+                telegram_id TEXT NOT NULL,
+                currency TEXT NOT NULL,
+                network TEXT NOT NULL,
+                amount DOUBLE PRECISION NOT NULL,
+                wallet_address TEXT NOT NULL,
+                tx_hash TEXT,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(case_id) REFERENCES cases(id)
+            )
+        """)
+
+    # =====================================================
+    # SQLITE
+    # =====================================================
+
+    else:
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS cases (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                goal REAL NOT NULL DEFAULT 0,
+                raised REAL NOT NULL DEFAULT 0,
+                currency TEXT NOT NULL DEFAULT 'USDT',
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id TEXT UNIQUE NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                username TEXT,
+                language TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                last_seen TEXT NOT NULL
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS wallets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                currency TEXT NOT NULL,
+                network TEXT NOT NULL,
+                address TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS donations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                case_id INTEGER NOT NULL,
+                telegram_id TEXT NOT NULL,
+                currency TEXT NOT NULL,
+                network TEXT NOT NULL,
+                amount REAL NOT NULL,
+                wallet_address TEXT NOT NULL,
+                tx_hash TEXT,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(case_id) REFERENCES cases(id)
+            )
+        """)
 
     conn.commit()
 
-    # Seed cases
-    cur.execute("SELECT COUNT(*) AS count FROM cases")
+    # =====================================================
+    # SEED CASES
+    # =====================================================
+
+    cur = conn.execute(
+        "SELECT COUNT(*) AS count FROM cases"
+    )
+
     if cur.fetchone()["count"] == 0:
+
         now = datetime.utcnow().isoformat()
 
-        cur.execute("""
+        conn.execute("""
             INSERT INTO cases
             (title, description, goal, raised, currency, status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -127,7 +279,7 @@ def init_db():
             now
         ))
 
-        cur.execute("""
+        conn.execute("""
             INSERT INTO cases
             (title, description, goal, raised, currency, status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -141,9 +293,16 @@ def init_db():
             now
         ))
 
-    # Seed wallets
-    cur.execute("SELECT COUNT(*) AS count FROM wallets")
+    # =====================================================
+    # SEED WALLETS
+    # =====================================================
+
+    cur = conn.execute(
+        "SELECT COUNT(*) AS count FROM wallets"
+    )
+
     if cur.fetchone()["count"] == 0:
+
         now = datetime.utcnow().isoformat()
 
         wallets = [
@@ -155,7 +314,8 @@ def init_db():
         ]
 
         for currency, network, address in wallets:
-            cur.execute("""
+
+            conn.execute("""
                 INSERT INTO wallets
                 (currency, network, address, status, created_at, updated_at)
                 VALUES (?, ?, ?, 'active', ?, ?)
@@ -174,9 +334,9 @@ def init_db():
 init_db()
 
 
-# =========================
+# =========================================================
 # MODELS
-# =========================
+# =========================================================
 
 class UserCreate(BaseModel):
     telegram_id: str
@@ -230,17 +390,20 @@ class DonationStatusUpdate(BaseModel):
     status: str
 
 
-# =========================
+# =========================================================
 # HELPERS
-# =========================
+# =========================================================
 
 def row_to_dict(row):
     return dict(row) if row else None
 
 
 def create_admin_token():
+
     timestamp = str(int(time.time()))
+
     payload = timestamp.encode()
+
     signature = hmac.new(
         ADMIN_SECRET.encode(),
         payload,
@@ -253,6 +416,7 @@ def create_admin_token():
 
 
 def verify_admin_token(token: Optional[str]):
+
     if not token:
         raise HTTPException(
             status_code=401,
@@ -263,7 +427,11 @@ def verify_admin_token(token: Optional[str]):
         token = token[7:]
 
     try:
-        decoded = base64.urlsafe_b64decode(token.encode()).decode()
+
+        decoded = base64.urlsafe_b64decode(
+            token.encode()
+        ).decode()
+
         timestamp, signature = decoded.split(".", 1)
 
         expected = hmac.new(
@@ -272,14 +440,25 @@ def verify_admin_token(token: Optional[str]):
             hashlib.sha256
         ).hexdigest()
 
-        if not hmac.compare_digest(signature, expected):
-            raise HTTPException(status_code=401, detail="Invalid admin token")
+        if not hmac.compare_digest(
+            signature,
+            expected
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid admin token"
+            )
 
-        # Token valid for 24 hours
         if int(time.time()) - int(timestamp) > 86400:
-            raise HTTPException(status_code=401, detail="Admin token expired")
+            raise HTTPException(
+                status_code=401,
+                detail="Admin token expired"
+            )
 
         return True
+
+    except HTTPException:
+        raise
 
     except Exception:
         raise HTTPException(
@@ -292,33 +471,38 @@ def require_admin(authorization: Optional[str]):
     verify_admin_token(authorization)
 
 
-# =========================
+# =========================================================
 # GENERAL
-# =========================
+# =========================================================
 
 @app.get("/")
 def root():
+
     return {
         "success": True,
         "name": "Kindly One API",
-        "version": "2.0.0"
+        "version": "2.1.0",
+        "database": "postgresql" if DATABASE_URL else "sqlite"
     }
 
 
 @app.get("/api/health")
 def health():
+
     return {
         "success": True,
-        "status": "ok"
+        "status": "ok",
+        "database": "postgresql" if DATABASE_URL else "sqlite"
     }
 
 
-# =========================
+# =========================================================
 # CASES
-# =========================
+# =========================================================
 
 @app.get("/api/cases")
 def get_cases():
+
     conn = get_db()
 
     rows = conn.execute("""
@@ -337,6 +521,7 @@ def get_cases():
 
 @app.get("/api/cases/{case_id}")
 def get_case(case_id: int):
+
     conn = get_db()
 
     row = conn.execute(
@@ -363,6 +548,7 @@ def admin_create_case(
     data: CaseCreate,
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     if data.goal < 0:
@@ -411,6 +597,7 @@ def admin_update_case(
     data: CaseUpdate,
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -422,6 +609,7 @@ def admin_update_case(
 
     if not existing:
         conn.close()
+
         raise HTTPException(
             status_code=404,
             detail="Case not found"
@@ -430,9 +618,12 @@ def admin_update_case(
     fields = []
     values = []
 
-    updates = data.model_dump(exclude_unset=True)
+    updates = data.model_dump(
+        exclude_unset=True
+    )
 
     for key, value in updates.items():
+
         if key not in {
             "title",
             "description",
@@ -447,6 +638,7 @@ def admin_update_case(
         values.append(value)
 
     if fields:
+
         values.append(case_id)
 
         conn.execute(
@@ -473,12 +665,13 @@ def admin_update_case(
     }
 
 
-# =========================
+# =========================================================
 # USERS
-# =========================
+# =========================================================
 
 @app.post("/api/users")
 def create_or_update_user(data: UserCreate):
+
     conn = get_db()
 
     now = datetime.utcnow().isoformat()
@@ -489,6 +682,7 @@ def create_or_update_user(data: UserCreate):
     ).fetchone()
 
     if existing:
+
         conn.execute("""
             UPDATE users
             SET first_name = ?,
@@ -505,7 +699,9 @@ def create_or_update_user(data: UserCreate):
             now,
             data.telegram_id
         ))
+
     else:
+
         conn.execute("""
             INSERT INTO users
             (telegram_id, first_name, last_name, username,
@@ -538,6 +734,7 @@ def create_or_update_user(data: UserCreate):
 
 @app.get("/api/users/{telegram_id}")
 def get_user(telegram_id: str):
+
     conn = get_db()
 
     row = conn.execute(
@@ -559,12 +756,13 @@ def get_user(telegram_id: str):
     }
 
 
-# =========================
+# =========================================================
 # WALLETS
-# =========================
+# =========================================================
 
 @app.get("/api/wallets")
 def get_wallets():
+
     conn = get_db()
 
     rows = conn.execute("""
@@ -586,6 +784,7 @@ def get_wallet(
     currency: str,
     network: str
 ):
+
     conn = get_db()
 
     row = conn.execute("""
@@ -620,6 +819,7 @@ def create_wallet(
     data: WalletCreate,
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -662,6 +862,7 @@ def update_wallet(
     data: WalletCreate,
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -673,6 +874,7 @@ def update_wallet(
 
     if not existing:
         conn.close()
+
         raise HTTPException(
             status_code=404,
             detail="Wallet not found"
@@ -712,12 +914,13 @@ def update_wallet(
     }
 
 
-# =========================
+# =========================================================
 # DONATIONS
-# =========================
+# =========================================================
 
 @app.post("/api/donations")
 def create_donation(data: DonationCreate):
+
     conn = get_db()
 
     case = conn.execute("""
@@ -725,10 +928,13 @@ def create_donation(data: DonationCreate):
         FROM cases
         WHERE id = ?
           AND status = 'active'
-    """, (data.case_id,)).fetchone()
+    """, (
+        data.case_id,
+    )).fetchone()
 
     if not case:
         conn.close()
+
         raise HTTPException(
             status_code=404,
             detail="Active case not found"
@@ -736,6 +942,7 @@ def create_donation(data: DonationCreate):
 
     if data.amount <= 0:
         conn.close()
+
         raise HTTPException(
             status_code=400,
             detail="Amount must be greater than zero"
@@ -756,6 +963,7 @@ def create_donation(data: DonationCreate):
 
     if not wallet:
         conn.close()
+
         raise HTTPException(
             status_code=404,
             detail="Active wallet not found"
@@ -802,6 +1010,7 @@ def confirm_donation(
     donation_id: int,
     data: DonationConfirm
 ):
+
     conn = get_db()
 
     row = conn.execute(
@@ -811,6 +1020,7 @@ def confirm_donation(
 
     if not row:
         conn.close()
+
         raise HTTPException(
             status_code=404,
             detail="Donation not found"
@@ -847,6 +1057,7 @@ def confirm_donation(
 
 @app.get("/api/donations/{donation_id}")
 def get_donation(donation_id: int):
+
     conn = get_db()
 
     row = conn.execute("""
@@ -856,7 +1067,9 @@ def get_donation(donation_id: int):
         FROM donations d
         LEFT JOIN cases c ON c.id = d.case_id
         WHERE d.id = ?
-    """, (donation_id,)).fetchone()
+    """, (
+        donation_id,
+    )).fetchone()
 
     conn.close()
 
@@ -872,12 +1085,13 @@ def get_donation(donation_id: int):
     }
 
 
-# =========================
+# =========================================================
 # ADMIN AUTH
-# =========================
+# =========================================================
 
 @app.post("/api/admin/login")
 def admin_login(data: AdminLogin):
+
     if not hmac.compare_digest(
         data.password,
         ADMIN_PASSWORD
@@ -893,14 +1107,15 @@ def admin_login(data: AdminLogin):
     }
 
 
-# =========================
+# =========================================================
 # ADMIN DASHBOARD
-# =========================
+# =========================================================
 
 @app.get("/api/admin/stats")
 def admin_stats(
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -964,14 +1179,15 @@ def admin_stats(
     }
 
 
-# =========================
+# =========================================================
 # ADMIN USERS
-# =========================
+# =========================================================
 
 @app.get("/api/admin/users")
 def admin_users(
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -990,14 +1206,15 @@ def admin_users(
     }
 
 
-# =========================
+# =========================================================
 # ADMIN CASES
-# =========================
+# =========================================================
 
 @app.get("/api/admin/cases")
 def admin_cases(
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -1016,14 +1233,15 @@ def admin_cases(
     }
 
 
-# =========================
+# =========================================================
 # ADMIN WALLETS
-# =========================
+# =========================================================
 
 @app.get("/api/admin/wallets")
 def admin_wallets(
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -1042,14 +1260,15 @@ def admin_wallets(
     }
 
 
-# =========================
+# =========================================================
 # ADMIN DONATIONS
-# =========================
+# =========================================================
 
 @app.get("/api/admin/donations")
 def admin_donations(
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     conn = get_db()
@@ -1077,6 +1296,7 @@ def admin_update_donation_status(
     data: DonationStatusUpdate,
     authorization: Optional[str] = Header(None)
 ):
+
     require_admin(authorization)
 
     allowed = {
@@ -1098,10 +1318,13 @@ def admin_update_donation_status(
         SELECT *
         FROM donations
         WHERE id = ?
-    """, (donation_id,)).fetchone()
+    """, (
+        donation_id,
+    )).fetchone()
 
     if not donation:
         conn.close()
+
         raise HTTPException(
             status_code=404,
             detail="Donation not found"
@@ -1111,7 +1334,11 @@ def admin_update_donation_status(
     new_status = data.status
 
     # Only approved donations count toward raised.
-    if old_status != "approved" and new_status == "approved":
+    if (
+        old_status != "approved"
+        and new_status == "approved"
+    ):
+
         conn.execute("""
             UPDATE cases
             SET raised = raised + ?
@@ -1121,7 +1348,11 @@ def admin_update_donation_status(
             donation["case_id"]
         ))
 
-    elif old_status == "approved" and new_status != "approved":
+    elif (
+        old_status == "approved"
+        and new_status != "approved"
+    ):
+
         conn.execute("""
             UPDATE cases
             SET raised = MAX(0, raised - ?)
@@ -1153,7 +1384,9 @@ def admin_update_donation_status(
         FROM donations d
         LEFT JOIN cases c ON c.id = d.case_id
         WHERE d.id = ?
-    """, (donation_id,)).fetchone()
+    """, (
+        donation_id,
+    )).fetchone()
 
     conn.close()
 
