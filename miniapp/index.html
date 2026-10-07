@@ -300,6 +300,15 @@
             text-align: center;
             line-height: 2;
         }
+
+        .error-box {
+            background: #fff0f0;
+            border: 1px solid #e5484d;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            line-height: 2;
+        }
     </style>
 </head>
 
@@ -320,7 +329,6 @@
         <div id="userBox" class="user-box"></div>
 
     </div>
-
 
     <!-- صفحه اصلی -->
 
@@ -352,7 +360,6 @@
 
     </div>
 
-
     <!-- صفحه کیس‌ها -->
 
     <div id="casesPage" class="hidden">
@@ -364,7 +371,6 @@
         </button>
 
     </div>
-
 
     <!-- صفحه جزئیات کیس -->
 
@@ -385,7 +391,6 @@
         </button>
 
     </div>
-
 
     <!-- صفحه انتخاب ارز -->
 
@@ -424,7 +429,6 @@
 
         </div>
 
-
         <div class="currency"
              onclick="selectCurrency('USDT', 'BEP20')">
 
@@ -449,7 +453,6 @@
             </div>
 
         </div>
-
 
         <div class="currency"
              onclick="selectCurrency('BTC', 'Bitcoin')">
@@ -476,7 +479,6 @@
 
         </div>
 
-
         <div class="currency"
              onclick="selectCurrency('ETH', 'Ethereum')">
 
@@ -501,7 +503,6 @@
             </div>
 
         </div>
-
 
         <div class="currency"
              onclick="selectCurrency('TRX', 'TRON')">
@@ -528,7 +529,6 @@
 
         </div>
 
-
         <br>
 
         <button class="back" onclick="showSelectedCase()">
@@ -536,7 +536,6 @@
         </button>
 
     </div>
-
 
     <!-- صفحه مبلغ -->
 
@@ -558,7 +557,6 @@
 
     </div>
 
-
     <!-- صفحه کیف پول -->
 
     <div id="walletPage" class="hidden">
@@ -572,7 +570,6 @@
         </button>
 
     </div>
-
 
     <!-- صفحه ثبت تراکنش -->
 
@@ -594,7 +591,6 @@
 
     </div>
 
-
     <!-- صفحه موفقیت -->
 
     <div id="successPage" class="hidden">
@@ -609,16 +605,13 @@
 
     </div>
 
-
     <div id="status" class="status"></div>
-
 
     <div class="footer">
         Kindly One ❤️
     </div>
 
 </div>
-
 
 <script>
 
@@ -731,7 +724,7 @@
 
         const userData = {
 
-            telegram_id: user.id,
+            telegram_id: String(user.id),
 
             first_name: user.first_name || "",
 
@@ -801,8 +794,8 @@
         }
 
         box.innerHTML =
-            "👤 " + name +
-            (username ? "<br>" + username : "");
+            "👤 " + escapeHtml(name) +
+            (username ? "<br>" + escapeHtml(username) : "");
 
         box.style.display = "block";
     }
@@ -901,14 +894,14 @@
 
                         <span>
                             جمع‌آوری:
-                            ${caseItem.raised}
-                            ${caseItem.currency}
+                            ${escapeHtml(caseItem.raised)}
+                            ${escapeHtml(caseItem.currency)}
                         </span>
 
                         <span>
                             هدف:
-                            ${caseItem.goal}
-                            ${caseItem.currency}
+                            ${escapeHtml(caseItem.goal)}
+                            ${escapeHtml(caseItem.currency)}
                         </span>
 
                     </div>
@@ -1037,14 +1030,14 @@
 
                     <span>
                         جمع‌آوری:
-                        ${caseItem.raised}
-                        ${caseItem.currency}
+                        ${escapeHtml(caseItem.raised)}
+                        ${escapeHtml(caseItem.currency)}
                     </span>
 
                     <span>
                         هدف:
-                        ${caseItem.goal}
-                        ${caseItem.currency}
+                        ${escapeHtml(caseItem.goal)}
+                        ${escapeHtml(caseItem.currency)}
                     </span>
 
                 </div>
@@ -1175,6 +1168,63 @@
 
 
     // =========================================
+    // Format API Error
+    // =========================================
+
+    function getErrorMessage(data, fallback) {
+
+        if (!data) {
+            return fallback;
+        }
+
+
+        if (typeof data.detail === "string") {
+            return data.detail;
+        }
+
+
+        if (Array.isArray(data.detail)) {
+
+            return data.detail.map(function(item) {
+
+                if (typeof item === "string") {
+                    return item;
+                }
+
+                if (item && item.msg) {
+                    return item.msg;
+                }
+
+                return JSON.stringify(item);
+
+            }).join(" | ");
+        }
+
+
+        if (data.detail && typeof data.detail === "object") {
+
+            if (data.detail.message) {
+                return data.detail.message;
+            }
+
+            if (data.detail.msg) {
+                return data.detail.msg;
+            }
+
+            return JSON.stringify(data.detail);
+        }
+
+
+        if (typeof data.message === "string") {
+            return data.message;
+        }
+
+
+        return fallback;
+    }
+
+
+    // =========================================
     // Create Donation
     // =========================================
 
@@ -1213,7 +1263,7 @@
         ) {
 
             telegramId =
-                tg.initDataUnsafe.user.id;
+                String(tg.initDataUnsafe.user.id);
         }
 
 
@@ -1259,7 +1309,10 @@
             if (!response.ok || !data.success) {
 
                 throw new Error(
-                    data.detail || "خطا در ایجاد درخواست"
+                    getErrorMessage(
+                        data,
+                        "خطا در ایجاد درخواست کمک"
+                    )
                 );
             }
 
@@ -1269,23 +1322,45 @@
             currentWallet = data.wallet;
 
 
+            if (!currentWallet || !currentWallet.address) {
+
+                throw new Error(
+                    "آدرس کیف پول از سرور دریافت نشد."
+                );
+            }
+
+
             renderWallet(data);
 
         } catch (error) {
 
-            console.error(error);
+            console.error("Create donation error:", error);
+
 
             document.getElementById("walletContent").innerHTML = `
 
-                <div class="case-detail">
+                <div class="error-box">
 
                     <h2>
                         خطا
                     </h2>
 
                     <p>
-                        ${escapeHtml(error.message)}
+                        ${escapeHtml(
+                            error.message ||
+                            "خطای نامشخص"
+                        )}
                     </p>
+
+                    <br>
+
+                    <button
+                        class="back"
+                        onclick="showCurrencies()">
+
+                        ← بازگشت
+
+                    </button>
 
                 </div>
 
@@ -1344,7 +1419,9 @@
                     <div
                         id="walletAddress"
                         class="wallet-address">
+
                         ${escapeHtml(wallet.address)}
+
                     </div>
 
                     <button
@@ -1533,7 +1610,10 @@
             if (!response.ok || !data.success) {
 
                 throw new Error(
-                    data.detail || "خطا در ثبت تراکنش"
+                    getErrorMessage(
+                        data,
+                        "خطا در ثبت تراکنش"
+                    )
                 );
             }
 
@@ -1558,7 +1638,7 @@
                     <p>
                         شناسه درخواست:
                         <strong>
-                            #${currentDonation.donation_id}
+                            #${escapeHtml(currentDonation.donation_id)}
                         </strong>
                     </p>
 
@@ -1573,10 +1653,11 @@
 
         } catch (error) {
 
-            console.error(error);
+            console.error("Confirm donation error:", error);
 
             showAlert(
-                error.message
+                error.message ||
+                "خطا در ثبت تراکنش"
             );
         }
     }
